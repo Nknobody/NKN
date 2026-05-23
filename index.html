@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>NKN · Nobody Knows Nobody</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { background: #0C0906; font-family: 'Trebuchet MS', 'Segoe UI', sans-serif; overflow: hidden; }
+    input, textarea { caret-color: #E8941A; outline: none; font-family: 'Courier New', monospace; }
+    input::placeholder, textarea::placeholder { color: #3D2A14; }
+
+    .app { width: 100%; max-width: 430px; height: 100vh; margin: 0 auto; background: #0C0906; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 80px rgba(0,0,0,.95); overflow: hidden; }
+    .hdr { height: 42px; background: #141009; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; border-bottom: 2px solid #352415; flex-shrink: 0; position: relative; z-index: 50; }
+    .scr { flex: 1; overflow-y: auto; padding: 0 14px 100px; scroll-behavior: smooth; }
+    .scr::-webkit-scrollbar { width: 3px; }
+    .scr::-webkit-scrollbar-thumb { background: #3A2A18; border-radius: 2px; }
+
+    .tabs { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(12,9,6,.95); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 1px solid #352415; display: flex; padding-bottom: 10px; z-index: 200; }
+    .tab { flex: 1; background: none; border: none; cursor: pointer; padding: 9px 0 2px; display: flex; flex-direction: column; align-items: center; gap: 2px; color: #3D2A14; font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: .04em; font-size: 7px; text-transform: uppercase; position: relative; transition: color .2s; }
+    .tab.on { color: #E8941A; filter: drop-shadow(0 0 6px #E8941A88); }
+    .tab-i { font-size: 13px; transition: all .25s cubic-bezier(.34,1.56,.64,1); }
+    .tab.on .tab-i { font-size: 16px; }
+    .tab-ink { position: absolute; top: 0; left: 50%; transform: translateX(-50%); height: 2px; background: #E8941A; border-radius: 0 0 2px 2px; transition: width .25s cubic-bezier(.34,1.56,.64,1); width: 0; }
+    .tab.on .tab-ink { width: 70%; }
+
+    .fab { position: absolute; bottom: 82px; right: 15px; width: 50px; height: 50px; border-radius: 25px; background: linear-gradient(135deg,#E8941A,#7A4A08); border: none; cursor: pointer; z-index: 150; box-shadow: 0 4px 20px rgba(232,148,26,.35), 0 0 0 2px #0C0906; font-size: 24px; color: #0C0906; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: transform .15s cubic-bezier(.34,1.56,.64,1); }
+    .fab:active { transform: scale(.9); }
+
+    .card { background: #1A1410; border: 1px solid #352415; border-radius: 6px; padding: 13px 15px; position: relative; transition: all .15s; margin-bottom: 8px; }
+    .pill { background: rgba(232,148,26,0.18); border: 1px solid rgba(232,148,26,0.55); color: #E8941A; border-radius: 4px; padding: 2px 7px; font-size: 9px; font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 0.1em; white-space: nowrap; text-transform: uppercase; display: inline-block; }
+    .bar { height: 4px; background: #3D2A14; border-radius: 0; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, #E8941ABB, #E8941A); width: 0%; transition: width .6s ease; }
+    .btn-gold { background: linear-gradient(135deg,#E8941A,#7A4A08); border: none; border-radius: 3px; padding: 12px; color: #0C0906; font-family: 'Courier New', monospace; font-weight: 700; font-size: 11px; cursor: pointer; width: 100%; text-transform: uppercase; }
+    .toast { position: fixed; top: 52px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg,#1A1410,rgba(232,148,26,.13)); border: 1px solid #7A4A08; border-radius: 4px; padding: 8px 16px; z-index: 100; font-family: 'Courier New', monospace; font-size: 11px; color: #E8941A; font-weight: 700; white-space: nowrap; animation: toastIn .3s cubic-bezier(.34,1.56,.64,1); }
+
+    @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    @keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(34,168,90,.5); } 60% { box-shadow: 0 0 0 7px rgba(34,168,90,0); } 100% { box-shadow: 0 0 0 0 rgba(34,168,90,0); } }
+
+    .text-dim { color: #8A7055; }
+    .text-faint { color: #3D2A14; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .mt-2 { margin-top: 8px; }
+    .gap-2 { gap: 8px; }
+    .live-dot { animation: livePulse 2s ease infinite; }
+  </style>
+</head>
+<body>
+<div class="app" id="appRoot">
+  <div class="hdr">
+    <span style="font-family:'Courier New',monospace;font-size:11px;color:#8A7055;">9:41</span>
+    <span style="font-family:'Georgia','Times New Roman',serif;font-size:12px;color:#E8941A;letter-spacing:0.2em;font-weight:700;">NKN</span>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;">
+      <span id="nknBalanceDisplay" style="font-family:'Courier New',monospace;font-size:10px;color:#E8941A;font-weight:700;">◉ 4.2</span>
+      <span style="font-family:'Courier New',monospace;font-size:7px;color:#3D2A14;">NKN BALANCE</span>
+    </div>
+  </div>
+
+  <div id="screenContainer" class="scr"></div>
+  <button class="fab" id="fabBtn">+</button>
+  <div class="tabs" id="tabBar"></div>
+</div>
+
+<script>
+const C = { gold: "#E8941A" };
+const LOCATIONS = [
+  { id: "ELITE1", name: "Elite 247 Training", partner: "Steve Preston", xp: 35, active: true },
+  { id: "RADBAR", name: "Rad Bar", partner: "Laneykickz", xp: 35, active: true },
+  { id: "BRKVL1", name: "Brookville High School", partner: "Logan Thomas", xp: 35, active: true },
+  { id: "GAS001", name: "Exxon – Wards Rd", partner: "Bitcoin Depot", xp: 15, active: true },
+  { id: "GAS002", name: "Shell – Timberlake", partner: "Bitcoin Depot", xp: 15, active: true }
+];
+const GUILDS = [
+  { id: 1, ticker: "GRND", name: "Ground", color: "#C8860A", members: 142, treasury: 1840 },
+  { id: 3, ticker: "KICKZ", name: "Kickz", color: "#3A5FBF", members: 211, treasury: 2960 },
+  { id: 13, ticker: "CORE", name: "Core", color: "#C87010", members: 177, treasury: 2420 }
+];
+const FEED_SEED = [
+  { user: "fluddmiles", action: "Checked in at", loc: "Elite 247 Training", xp: 35, treasury: "$1.40", avatar: "F", ago: "2m" },
+  { user: "laneykickz", action: "Refill shift at", loc: "Exxon – Wards Rd", xp: 50, treasury: "$2.00", avatar: "L", ago: "11m" },
+  { user: "loganthomas", action: "Ran event at", loc: "Brookville HS", xp: 75, treasury: "$3.00", avatar: "L", ago: "28m" }
+];
+let state = { tab: "feed", userXP: 3840, userNKN: 4.2, scores: [], claimedUBI: false, showCreate: false };
+
+try {
+  const saved = localStorage.getItem("nkn_demo");
+  if (saved) {
+    const p = JSON.parse(saved);
+    if (typeof p.userXP === "number") state.userXP = p.userXP;
+    if (typeof p.userNKN === "number") state.userNKN = p.userNKN;
+    if (Array.isArray(p.scores)) state.scores = p.scores;
+    if (typeof p.claimedUBI === "boolean") state.claimedUBI = p.claimedUBI;
+  }
+} catch (e) { console.warn(e); }
+
+const persistState = () => localStorage.setItem("nkn_demo", JSON.stringify({ userXP: state.userXP, userNKN: state.userNKN, scores: state.scores.slice(-50), claimedUBI: state.claimedUBI }));
+const showToast = (msg, duration = 2500) => { const old = document.querySelector(".toast"); if (old) old.remove(); const t = document.createElement("div"); t.className = "toast"; t.innerText = msg; document.body.appendChild(t); setTimeout(() => t.remove(), duration); };
+
+function addScore(xpGain, locName) {
+  const newXP = state.userXP + xpGain;
+  const fibs = [1000, 2000, 3000, 5000, 8000, 13000, 21000];
+  const mint = fibs.some(f => state.userXP < f && newXP >= f);
+  if (mint) state.userNKN += 1;
+  state.userXP = newXP;
+  state.scores.unshift({ type: "check_in", xp: xpGain, loc: locName, ts: new Date().toLocaleTimeString() });
+  persistState();
+  refreshUI();
+  showToast(`+${xpGain} XP earned!`);
+  if (mint) showToast("✨ Fibonacci mint! +1 NKN ✨", 3000);
+}
+const claimUBI = () => { if (state.claimedUBI) return showToast("Already claimed this month"); state.claimedUBI = true; state.userNKN += 10; persistState(); refreshUI(); showToast("🏛️ UBI claimed! +10 NKN"); };
+const handleCheckin = code => { const loc = LOCATIONS.find(l => l.id === code && l.active); if (!loc) return showToast("Invalid or offline code", 1500); addScore(loc.xp, loc.name); };
+
+const renderFeed = () => {
+  let html = `<div style="padding:18px 0 10px;"><div style="font-family:'Courier New',monospace;font-size:9px;color:#7A4A08;letter-spacing:0.25em;">NOBODY KNOWS NOBODY</div><div style="font-family:'Georgia',serif;font-size:22px;color:#F2E8D5;">Points Scored<br/>Through Real Work</div></div><div class="card" style="background:linear-gradient(135deg,#1A1410,rgba(232,148,26,0.13));border-color:#7A4A0844;"><div class="flex-between"><span class="pill" style="background:none;">COMMUNITY SCORECARD</span><span class="live-dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#22A85A;"></span></div><div class="flex-between mt-2"><span style="font-size:22px;font-family:Georgia,serif;color:#E8941A;">+${state.scores.slice(0,5).reduce((a,b)=>a+b.xp,0)}</span><span>XP TODAY</span></div></div>`;
+  const feedItems = [...FEED_SEED, ...state.scores.slice(0,6).map(s => ({ user:"you", action:"Scored", loc:s.loc, xp:s.xp, treasury:"$"+(s.xp*0.04).toFixed(2), avatar:"Y", ago:"now" }))];
+  for (const item of feedItems.slice(0,8)) html += `<div class="card" style="border-left:2px solid #E8941A;"><div style="display:flex;gap:10px;"><div style="width:34px;height:34px;border-radius:17px;background:#E8941A18;border:1px solid #E8941A55;display:flex;align-items:center;justify-content:center;font-weight:700;">${item.avatar}</div><div><div><strong>@${item.user}</strong> <span style="color:#8A7055;">${item.ago}</span></div><div>${item.action} ${item.loc}</div><div class="flex-between mt-2"><span class="pill">+${item.xp} XP</span><span style="color:#22A85A;">▲ ${item.treasury}</span></div></div></div></div>`;
+  return html;
+};
+const renderCheckin = () => `<div style="padding:18px 0 14px;"><div style="font-family:'Courier New';font-size:9px;color:#7A4A08;">PHYSICAL VERIFICATION</div><div style="font-family:Georgia;font-size:22px;">Check In</div></div><div class="card"><div style="text-align:center;">Enter 6-character location code</div><div class="flex-between gap-2 mt-2" id="checkinCodeInputs" style="justify-content:center;">${Array(6).fill(0).map((_,i)=>`<input type="text" maxlength="1" data-codeidx="${i}" style="width:42px;height:52px;text-align:center;background:#141009;border:1px solid #352415;color:#E8941A;font-size:20px;font-weight:700;border-radius:3px;">`).join("")}</div><button id="submitCheckinBtn" class="btn-gold mt-2">VERIFY & SCORE</button></div>${LOCATIONS.filter(l=>l.active).map(loc=>`<div class="card" data-loccode="${loc.id}" style="cursor:pointer;"><div class="flex-between"><div><strong>${loc.name}</strong><div class="text-dim">${loc.partner}</div></div><div><span class="pill">+${loc.xp} XP</span><br><span class="text-faint">${loc.id}</span></div></div></div>`).join("")}`;
+const renderGuilds = () => `<div style="padding:18px 0 12px;"><div style="font-family:'Courier New';font-size:9px;color:#7A4A08;">13 ACTIVE GUILDS</div><div style="font-family:Georgia;font-size:22px;">Guilds</div></div>${GUILDS.map(g=>`<div class="card" style="border-left:3px solid ${g.color}"><div class="flex-between"><div><strong>${g.name}</strong><div class="text-dim">${g.members} members</div></div><div><span class="pill" style="color:${g.color};">${g.ticker}</span><div class="text-dim mt-2">$${g.treasury}</div></div></div></div>`).join("")}<button class="btn-gold" id="demoClaimUbiBtn">🏛️ CLAIM UBI (demo +10 NKN)</button>`;
+const renderWallet = () => `<div class="card"><div class="flex-between"><span>XP</span><span>${state.userXP}</span></div><div class="flex-between"><span>NKN</span><span>${state.userNKN.toFixed(1)}</span></div><button id="walletClaimUbi" class="pill" style="margin-top:8px;width:100%;">${state.claimedUBI ? "Already claimed" : "Claim 10 NKN"}</button></div>`;
+
+function renderCurrentScreen() {
+  document.getElementById("nknBalanceDisplay").innerHTML = `◉ ${state.userNKN.toFixed(1)}`;
+  const c = document.getElementById("screenContainer");
+  if (state.showCreate) { c.innerHTML = `<div class="card" style="margin-top:14px;"><input type="text" placeholder="Activity title" style="width:100%;background:#141009;border:1px solid #352415;padding:10px;color:white;"><button id="createConfirmBtn" class="btn-gold mt-2">Publish to Network</button><button id="cancelCreateBtn" class="pill mt-2" style="background:none;">Cancel</button></div>`; document.getElementById("createConfirmBtn").onclick = () => { state.showCreate = false; showToast("Activity created! (demo)"); renderCurrentScreen(); }; document.getElementById("cancelCreateBtn").onclick = () => { state.showCreate = false; renderCurrentScreen(); }; return; }
+  c.innerHTML = state.tab === "feed" ? renderFeed() : state.tab === "checkin" ? renderCheckin() : state.tab === "guilds" ? renderGuilds() : renderWallet();
+
+  if (state.tab === "checkin") {
+    const inputs = [...document.querySelectorAll("#checkinCodeInputs input")];
+    inputs.forEach((inp, idx) => {
+      inp.addEventListener("input", e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0,1); if (e.target.value && idx < 5) inputs[idx+1].focus(); });
+      inp.addEventListener("keydown", e => { if (e.key === "Backspace" && !inp.value && idx > 0) inputs[idx-1].focus(); });
+    });
+    document.getElementById("submitCheckinBtn").onclick = () => { const code = inputs.map(i => i.value).join(""); if (code.length !== 6) return showToast("Enter 6-character code", 1000); handleCheckin(code); };
+    document.querySelectorAll("[data-loccode]").forEach(el => el.addEventListener("click", () => { const code = el.getAttribute("data-loccode"); code.split("").forEach((ch, i) => { inputs[i].value = ch; }); inputs[5].focus(); }));
+  }
+  if (state.tab === "guilds") document.getElementById("demoClaimUbiBtn").onclick = claimUBI;
+  if (state.tab === "wallet") document.getElementById("walletClaimUbi").onclick = claimUBI;
+}
+
+const tabs = [{ key: "feed", icon: "◈", label: "Activity" }, { key: "checkin", icon: "◉", label: "Check In" }, { key: "guilds", icon: "⬡", label: "Guilds" }, { key: "wallet", icon: "◎", label: "Impact" }];
+function buildTabBar() {
+  const bar = document.getElementById("tabBar");
+  bar.innerHTML = "";
+  tabs.forEach(t => {
+    const btn = document.createElement("button");
+    btn.className = `tab ${state.tab === t.key ? "on" : ""}`;
+    btn.innerHTML = `<div class="tab-ink"></div><span class="tab-i">${t.icon}</span><span>${t.label}</span>`;
+    btn.onclick = () => { state.tab = t.key; state.showCreate = false; renderCurrentScreen(); buildTabBar(); };
+    bar.appendChild(btn);
+  });
+}
+
+document.getElementById("fabBtn").onclick = () => { state.showCreate = true; renderCurrentScreen(); };
+buildTabBar();
+renderCurrentScreen();
+</script>
+</body>
+</html>
